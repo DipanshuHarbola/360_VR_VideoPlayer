@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">360-VR VideoPlayer</string>
+    <string name="app_title">360-VR VideoPlayer</string>
+    <string name="uri_hint">Enter 360 Video URI</string>
+    <string name="btn_text">Play Video</string>
+</resources>
