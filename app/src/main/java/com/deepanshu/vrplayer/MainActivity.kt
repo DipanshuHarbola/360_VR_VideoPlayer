@@ -1,5 +1,6 @@
 package com.deepanshu.vrplayer
 
+import android.annotation.SuppressLint
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Button

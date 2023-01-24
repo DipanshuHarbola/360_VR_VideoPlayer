@@ -11,6 +11,7 @@ import android.widget.Toast
 import com.asha.vrlib.MD360Director
 import com.asha.vrlib.MD360DirectorFactory
 import com.asha.vrlib.MDVRLibrary
+import com.asha.vrlib.MDVRLibrary.DirectorFilterAdatper
 import com.asha.vrlib.model.BarrelDistortionConfig
 import com.asha.vrlib.model.MDPinchConfig
 import com.google.android.exoplayer2.ExoPlayer
@@ -18,6 +19,8 @@ import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.source.MediaSource
+import com.google.android.exoplayer2.source.ProgressiveMediaSource
+import com.google.android.exoplayer2.source.hls.DefaultHlsDataSourceFactory
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSource
 
@@ -46,9 +49,14 @@ class VideoPlayerActivity : BaseVideoPlayerActivity() {
                     return MD360Director.builder().setPitch(90F).build()
                 }
             }).projectionFactory(CustomProjectionFactory()).barrelDistortionConfig(
-                BarrelDistortionConfig().setDefaultEnabled(false).setScale(0.95f)
-            ).build(findViewById<GLSurfaceView>(R.id.gl_view))
+                BarrelDistortionConfig().setParamA(-0.068).setParamB(0.320000).setParamC(-0.2).setDefaultEnabled(false)
+                    .setScale(0.80f)
+            )
+            .build(findViewById<GLSurfaceView>(R.id.gl_view))
 
+        // ParamA is for distance in views.
+        // ParamB is for shape or radius.
+        // ParamC is for
     }
 
     override fun onResume() {
@@ -80,21 +88,22 @@ class VideoPlayerActivity : BaseVideoPlayerActivity() {
         return MediaItem.Builder().setUri(uri).build()
     }
 
-    private fun mediaSource(): MediaSource.Factory {
+    private fun mediaSource(uriTypeHls: Boolean): MediaSource.Factory {
         val dataSourceFactory: DataSource.Factory = DefaultDataSource.Factory(this)
-        return DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory)
+        return if (uriTypeHls)  DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory)
+        else ProgressiveMediaSource.Factory(dataSourceFactory)
     }
 
     private fun initializePlayer() {
+        val uri = getUri()
+        val urlTypeHls = uri?.path?.contains(".m3u8");
         if (player == null) {
-            val builder = ExoPlayer.Builder(this).setMediaSourceFactory(mediaSource())
+            val builder = ExoPlayer.Builder(this).setMediaSourceFactory(mediaSource(urlTypeHls!!))
             player = builder.build()
         }
         player?.repeatMode = Player.REPEAT_MODE_ALL
-        val uri = getUri()
         if (uri != null) {
             player?.setMediaItem(mediaItem(uri))
-            cancelBusy()
             if (getVRLibrary() != null) {
                 getVRLibrary()!!.notifyPlayerChanged()
             }
@@ -108,6 +117,7 @@ class VideoPlayerActivity : BaseVideoPlayerActivity() {
     }
 
     private fun playVideo() {
+        cancelBusy()
         player?.prepare()
         player?.play()
     }
